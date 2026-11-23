@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, PlainTextResponse
 
@@ -14,7 +16,19 @@ app = FastAPI(
     include_in_schema=False,
 )
 def verify_safeops():
-    return "YwmSe17p033G-cYaaTzSpEx9CzYXPbXH7PiS8g"
+    # Respond with the current challenge stored in Vercel's environment settings.
+    # No hard-coded token or trailing newline is added to the response.
+    token = os.getenv("SAFEOPS_VERIFICATION_TOKEN")
+    if not token:
+        return PlainTextResponse(
+            "Verification challenge is not configured",
+            status_code=503,
+            headers={"Cache-Control": "no-store"},
+        )
+    return PlainTextResponse(
+        token,
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.get("/api/data")
