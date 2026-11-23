@@ -1,7 +1,7 @@
 import os
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, JSONResponse
 
 
 app = FastAPI(
@@ -31,8 +31,31 @@ def verify_safeops():
     )
 
 
+# Staging-only outage switch. Configure this variable only on an isolated test deployment.
+# Default is healthy, so a missing setting cannot accidentally cause an outage.
+def _controlled_test_outage():
+    return os.getenv("SAFEOPS_TEST_OUTAGE", "0") == "1"
+
+
+@app.get("/health")
+def health_check():
+    if _controlled_test_outage():
+        return JSONResponse(status_code=503, content={
+            "status": "unhealthy",
+            "service": "safeops-incident-lab",
+            "reason": "controlled-staging-test",
+        })
+    return {"status": "healthy", "service": "safeops-incident-lab"}
+
+
 @app.get("/api/data")
 def get_sample_data():
+    if _controlled_test_outage():
+        return JSONResponse(status_code=503, content={
+            "status": "unhealthy",
+            "service": "safeops-incident-lab",
+            "reason": "controlled-staging-test",
+        })
     return {
         "data": [
             {"id": 1, "name": "Sample Item 1", "value": 100},
