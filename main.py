@@ -8,6 +8,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.get(
+    "/.well-known/safeops-verification",
+    response_class=PlainTextResponse,
+    include_in_schema=False,
+)
+def verify_safeops():
+    return "YwmSe17p033G-cYaaTzSpEx9CzYXPbXH7PiS8g"
+
 
 @app.get("/api/data")
 def get_sample_data():
